@@ -17,13 +17,12 @@ export class CreateRoomDto {
 }
 
 export class RoomDto {
-  @IsNotEmpty()
-  @IsString()
+  @ApiProperty()
+  id: string;
+
   @ApiProperty()
   title: string;
 
-  @IsNotEmpty()
-  @IsString()
   @ApiProperty()
   description: string;
 

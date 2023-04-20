@@ -1,7 +1,11 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Server, Socket } from "socket.io";
-import { Logger } from "@nestjs/common";
 import { SubscribeMessage } from "@nestjs/websockets";
 import { RoomsService } from "src/rooms/rooms.service";
+import { CreateRoomDto } from "src/rooms/dto/rooms.dto";
+import { Logger, Session, UseGuards } from "@nestjs/common";
+import { SessionGuard } from "src/auth/guards/session.guard";
+import { CreateMessageDto } from "src/messages/dto/message.dto";
 import {
   ConnectedSocket,
   OnGatewayConnection,
@@ -11,12 +15,20 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 
-export enum Events {
-  NEW_MESSAGE = "newMessage",
+export enum RoomActions {
+  CREATE = "create",
+  ADD_USER = "addUser",
+  LEAVE_ROOM = "leaveRoom",
+  SEND_MESSAGE = "sendMessage",
+  GET_LATEST_MESSAGE = "getLatestMessages",
 }
 
+@ApiTags("Rooms")
 @WebSocketGateway()
+@UseGuards(SessionGuard)
 export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect, OnGatewayConnection {
+  constructor(private readonly roomService: RoomsService) {}
+
   @WebSocketServer() wss: Server;
 
   private readonly logger: Logger = new Logger("Colkie Chat");
@@ -35,39 +47,39 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect, OnGatewa
     client.disconnect();
   }
 
-  constructor(private readonly roomService: RoomsService) {}
-
-  /*
-  @SubscribeMessage("joinRoom")
-  handleJoinRoom(client: Socket, data: { roomId: string; user: string }): void {
-    const room = this.roomService.addRoomUser(data.roomId, data.user);
+  @SubscribeMessage(RoomActions.CREATE)
+  async roomCreate(client: Socket, @Session() session: any, createRoomDto: CreateRoomDto) {
+    const room = await this.roomService.create(createRoomDto, session.passport.user.id);
     client.join(room.id);
-    client.emit("joinedRoom", room);
-    client.to(room.id).emit("userJoined", data.user);
+    client.emit("roomCreated", room);
   }
 
-  @SubscribeMessage("leaveRoom")
-  handleLeaveRoom(client: Socket, data: { roomId: string; user: string }): void {
-    const room = this.roomService.getRoomById(data.roomId);
-    const userIndex = room.users.indexOf(data.user);
-    if (userIndex !== -1) {
-      room.users.splice(userIndex, 1);
-    }
+  @SubscribeMessage(RoomActions.ADD_USER)
+  async addUserToRoom(client: Socket, @Session() session: any, roomId: string) {
+    const { room, user } = await this.roomService.addUserToRoom(roomId, session.passport.user.id);
+    client.join(room.id);
+    client.emit("userAdded", room);
+    client.to(room.id).emit("userJoined", user.id);
+  }
+
+  @SubscribeMessage(RoomActions.LEAVE_ROOM)
+  async leaveRoom(client: Socket, @Session() session: any, roomId: string) {
+    const { room, user } = await this.roomService.leaveRoom(roomId, session.passport.user.id);
     client.leave(room.id);
     client.emit("leftRoom", room);
-    client.to(room.id).emit("userLeft", data.user);
+    client.to(room.id).emit("userLeft", user);
   }
 
-  @SubscribeMessage("sendMessage")
-  handleSendMessage(client: Socket, data: { roomId: string; user: string; text: string }): void {
-    const message = this.roomService.addRoomMessage(data.roomId, data.user, data.text);
-    client.to(data.roomId).emit("messageReceived", message);
+  @SubscribeMessage(RoomActions.SEND_MESSAGE)
+  async sendMessageToRoom(client: Socket, message: CreateMessageDto) {
+    const newMessage = await this.roomService.sendMessageToRoom(message);
+    client.to(newMessage.room.id).emit("messageSent", message);
+    this.wss.to(newMessage.room.id).emit("messageSent", message);
   }
 
-  @SubscribeMessage("getLatestMessages")
-  handleGetLatestMessages(client: Socket, data: { roomId: string; limit: number }): void {
-    const messages = this.roomService.getRoomMessages(data.roomId, data.limit);
-    client.emit("latestMessages", messages);
+  @SubscribeMessage(RoomActions.GET_LATEST_MESSAGE)
+  async handleGetLatestMessages(client: Socket, roomId: string) {
+    const room = await this.roomService.getRoomMessages(roomId);
+    client.emit("latestMessages", room.messages);
   }
-  */
 }

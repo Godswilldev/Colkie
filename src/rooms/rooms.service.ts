@@ -1,13 +1,12 @@
-import { Like, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { Injectable } from "@nestjs/common";
 import { Guard } from "src/utils/guard.utils";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "src/users/entities/user.entity";
 import { Room } from "src/rooms/entities/rooms.entity";
 import { Message } from "src/messages/entities/message.entity";
-import { CreateRoomDto, RoomDto, UpdateRoomsDto } from "src/rooms/dto/rooms.dto";
-import { ResponseManager, StandardResponse } from "src/utils/responseManager.utils";
-import { Paginate, QueryDto, paginateResponse } from "src/utils/pagination.utils";
+import { CreateRoomDto, RoomDto } from "src/rooms/dto/rooms.dto";
+import { CreateMessageDto, MessageDto } from "src/messages/dto/message.dto";
 
 @Injectable()
 export class RoomsService {
@@ -17,7 +16,7 @@ export class RoomsService {
     @InjectRepository(Message) private messageRepository: Repository<Message>,
   ) {}
 
-  async create(createRoomDto: CreateRoomDto, userId: string): Promise<StandardResponse<RoomDto>> {
+  async create(createRoomDto: CreateRoomDto, userId: string): Promise<RoomDto> {
     const user = await this.userRepository.findOneBy({ id: userId });
     Guard.AgainstNotFound(user, "user");
 
@@ -25,77 +24,54 @@ export class RoomsService {
 
     await newRoom.save();
 
-    return ResponseManager.StandardResponse({
-      code: 201,
-      status: "success",
-      message: "room created successfully",
-      data: newRoom,
-    });
+    return newRoom;
   }
 
-  async findAll(query: QueryDto): Promise<StandardResponse<Paginate[]>> {
-    const page = query?.page || 1;
-    const limit = query?.limit || 5;
-    const skip = (page - 1) * limit;
-    const search = query?.search || "";
+  async addUserToRoom(roomId: string, userId: string): Promise<{ room: Room; user: User }> {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    Guard.AgainstNotFound(user, "user");
 
-    const rooms = await this.roomsRepository.findAndCount({
-      take: limit,
-      skip,
-      where: { title: Like(`%${search}%`) },
-      order: { createdAt: "DESC" },
-    });
-
-    return ResponseManager.StandardResponse({
-      code: 200,
-      message: "room fetched successfully",
-      ...paginateResponse(rooms, page, limit),
-    });
-  }
-
-  async findOne(id: string): Promise<StandardResponse<Room>> {
-    const room = await this.roomsRepository.findOne({
-      where: { id },
-      relations: { users: true, messages: true },
-    });
-
+    const room = await this.roomsRepository.findOneBy({ id: roomId });
     Guard.AgainstNotFound(room, "room");
 
-    return ResponseManager.StandardResponse({
-      status: "success",
-      code: 200,
-      message: "Room retrieved Successfully",
-      data: room,
-    });
+    room.users.push(user);
+
+    await room.save();
+
+    return { room, user };
   }
 
-  async update(id: string, updateRoomDto: UpdateRoomsDto): Promise<StandardResponse<Room>> {
-    const room = await this.roomsRepository.findOneBy({ id });
+  async leaveRoom(roomId: string, userId: string): Promise<{ room: Room; user: User }> {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    Guard.AgainstNotFound(user, "user");
 
+    const room = await this.roomsRepository.findOneBy({ id: roomId });
     Guard.AgainstNotFound(room, "room");
 
-    await this.roomsRepository.update({ id }, { ...updateRoomDto });
+    room.users.filter((u) => u.id !== user.id);
 
-    return ResponseManager.StandardResponse({
-      status: "success",
-      code: 200,
-      message: "Room Updated Successfully",
-      data: room,
-    });
+    await room.save();
+
+    return { room, user };
   }
 
-  async remove(id: string): Promise<StandardResponse<null>> {
-    const room = await this.roomsRepository.findOneBy({ id });
+  async sendMessageToRoom(message: CreateMessageDto): Promise<MessageDto> {
+    const user = await this.userRepository.findOneBy({ id: message.userId });
+    Guard.AgainstNotFound(user, "user");
 
+    const room = await this.roomsRepository.findOneBy({ id: message.roomId });
     Guard.AgainstNotFound(room, "room");
 
-    await this.roomsRepository.delete({ id });
+    const newMessage = await this.messageRepository.create({ user, room, text: message.text });
+    await newMessage.save();
 
-    return ResponseManager.StandardResponse({
-      status: "success",
-      code: 204,
-      message: "Room deleted Successfully",
-      data: null,
-    });
+    return newMessage;
+  }
+
+  async getRoomMessages(roomId: string): Promise<Room> {
+    const room = await this.roomsRepository.findOneBy({ id: roomId });
+    Guard.AgainstNotFound(room, "room");
+
+    return room;
   }
 }

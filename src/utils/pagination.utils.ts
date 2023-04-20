@@ -19,17 +19,6 @@ export const paginateResponse = (data: [any[], number], page: number, limit: num
   };
 };
 
-export enum SortEnum {
-  ascending = "ASC",
-  descending = "DESC",
-}
-
-export enum SortField {
-  createdAt = "createdAt",
-  rating = "rating",
-  price = "price",
-}
-
 export class QueryDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -43,16 +32,6 @@ export class QueryDto {
   @IsOptional()
   @IsString()
   search?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  sortOrder?: SortEnum;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  sortField?: SortField;
 }
 
 export class meta {

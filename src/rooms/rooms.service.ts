@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { Like, Repository } from "typeorm";
 import { Injectable } from "@nestjs/common";
 import { Guard } from "src/utils/guard.utils";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -7,7 +7,7 @@ import { Room } from "src/rooms/entities/rooms.entity";
 import { Message } from "src/messages/entities/message.entity";
 import { CreateRoomDto, RoomDto, UpdateRoomsDto } from "src/rooms/dto/rooms.dto";
 import { ResponseManager, StandardResponse } from "src/utils/responseManager.utils";
-import { Paginate, QueryDto, SortEnum, paginateResponse } from "src/utils/pagination.utils";
+import { Paginate, QueryDto, paginateResponse } from "src/utils/pagination.utils";
 
 @Injectable()
 export class RoomsService {
@@ -34,18 +34,16 @@ export class RoomsService {
   }
 
   async findAll(query: QueryDto): Promise<StandardResponse<Paginate[]>> {
-    const page = query.page || 1;
-    const limit = query.limit || 5;
+    const page = query?.page || 1;
+    const limit = query?.limit || 5;
     const skip = (page - 1) * limit;
-    const sortField = query.sortField;
-    const sortOrder = query.sortOrder;
+    const search = query?.search || "";
 
     const rooms = await this.roomsRepository.findAndCount({
       take: limit,
       skip,
-      order: {
-        [sortField]: sortOrder === SortEnum.descending ? SortEnum.descending : SortEnum.ascending,
-      },
+      where: { title: Like(`%${search}%`) },
+      order: { createdAt: "DESC" },
     });
 
     return ResponseManager.StandardResponse({

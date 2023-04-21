@@ -15,11 +15,16 @@ Typescript
 
 PostgreSQL
 
-TypeORM
+
 
 Jest
 
-Swagger
+NestJS: a Node.js framework for building scalable applications.
+
+TypeORM: an Object-Relational Mapping (ORM) library for TypeScript.
+
+WebSocket: a protocol for providing full-duplex communication channels over a single TCP connection.
+
 ## Installation
 
 ```bash

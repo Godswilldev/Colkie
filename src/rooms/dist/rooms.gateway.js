@@ -46,7 +46,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.RoomGateway = exports.RoomActions = void 0;
-var swagger_1 = require("@nestjs/swagger");
 var websockets_1 = require("@nestjs/websockets");
 var common_1 = require("@nestjs/common");
 var session_guard_1 = require("src/auth/guards/session.guard");
@@ -182,7 +181,6 @@ var RoomGateway = /** @class */ (function () {
         __param(0, websockets_2.ConnectedSocket())
     ], RoomGateway.prototype, "handleGetLatestMessages");
     RoomGateway = __decorate([
-        swagger_1.ApiTags("Rooms"),
         websockets_2.WebSocketGateway(),
         common_1.UseGuards(session_guard_1.SessionGuard)
     ], RoomGateway);

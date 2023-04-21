@@ -23,7 +23,6 @@ export enum RoomActions {
   GET_LATEST_MESSAGE = "getLatestMessages",
 }
 
-@ApiTags("Rooms")
 @WebSocketGateway()
 @UseGuards(SessionGuard)
 export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect, OnGatewayConnection {

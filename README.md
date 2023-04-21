@@ -9,7 +9,7 @@
 Colkie Senior Backend Developer Challenge. This is a Nest.js project created to model a chat-like behavior of a community channel. The project includes endpoints for creating a room, adding a user to a room, sending a message to a room, and getting the latest messages from a room
 
 ## Technologies Used 
-Nest.js
+
 
 Typescript
 

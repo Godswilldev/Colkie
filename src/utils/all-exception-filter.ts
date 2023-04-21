@@ -8,10 +8,12 @@ import {
   HttpException,
   BadRequestException,
 } from "@nestjs/common";
+import { BaseWsExceptionFilter } from "@nestjs/websockets";
 
 @Catch()
-export class GlobalErrorHandler implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
+export class GlobalErrorHandler extends BaseWsExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    super.catch(exception, host);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -19,17 +21,18 @@ export class GlobalErrorHandler implements ExceptionFilter {
     const httpStatus =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.CONFLICT;
 
-    const cause = exception.cause;
-    const name = exception.name;
-    const message = exception.message;
+    // const cause = exception.cause;
+    // const name = exception.name;
+    // const message = exception.message;
 
     return response.status(httpStatus).json({
       statusCode: httpStatus,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message,
-      cause,
-      name,
+      error: exception,
+      // message,
+      // cause,
+      // name,
 
       // [exception instanceof BadRequestException || exception instanceof UnauthorizedException
       //   ? "error"

@@ -28,9 +28,9 @@ import { Message } from "src/messages/entities/message.entity";
       password: process.env.LOCAL_DATABASE_PASSWORD,
     }),
 
+    RoomsModule,
     AuthModule,
     UsersModule,
-    RoomsModule,
   ],
 })
 export class AppModule {

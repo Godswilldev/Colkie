@@ -162,21 +162,24 @@ var RoomGateway = /** @class */ (function () {
     ], RoomGateway.prototype, "handleDisconnect");
     __decorate([
         websockets_1.SubscribeMessage(RoomActions.CREATE),
+        __param(0, websockets_2.ConnectedSocket()),
         __param(1, common_1.Session())
     ], RoomGateway.prototype, "roomCreate");
     __decorate([
         websockets_1.SubscribeMessage(RoomActions.ADD_USER),
-        __param(1, common_1.Session())
+        __param(0, websockets_2.ConnectedSocket()), __param(1, common_1.Session())
     ], RoomGateway.prototype, "addUserToRoom");
     __decorate([
         websockets_1.SubscribeMessage(RoomActions.LEAVE_ROOM),
-        __param(1, common_1.Session())
+        __param(0, websockets_2.ConnectedSocket()), __param(1, common_1.Session())
     ], RoomGateway.prototype, "leaveRoom");
     __decorate([
-        websockets_1.SubscribeMessage(RoomActions.SEND_MESSAGE)
+        websockets_1.SubscribeMessage(RoomActions.SEND_MESSAGE),
+        __param(0, websockets_2.ConnectedSocket())
     ], RoomGateway.prototype, "sendMessageToRoom");
     __decorate([
-        websockets_1.SubscribeMessage(RoomActions.GET_LATEST_MESSAGE)
+        websockets_1.SubscribeMessage(RoomActions.GET_LATEST_MESSAGE),
+        __param(0, websockets_2.ConnectedSocket())
     ], RoomGateway.prototype, "handleGetLatestMessages");
     RoomGateway = __decorate([
         swagger_1.ApiTags("Rooms"),

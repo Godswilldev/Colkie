@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { HttpException, HttpStatus } from "@nestjs/common";
+import { WsException } from "@nestjs/websockets";
 
 interface Response<T> {
   status: string;
@@ -53,7 +54,7 @@ export class ResponseManager {
   }
 
   public static BadRequestResponse(message: string, meta?: object) {
-    return new HttpException(
+    return new WsException(
       ResponseManager.StandardResponse({
         status: "Bad request",
         code: 400,
@@ -61,12 +62,12 @@ export class ResponseManager {
         data: null,
         meta,
       }),
-      HttpStatus.BAD_REQUEST,
+      // HttpStatus.BAD_REQUEST,
     );
   }
 
   static NotFoundResponse(message: string, meta?: object) {
-    return new HttpException(
+    return new WsException(
       ResponseManager.StandardResponse({
         status: "Not found",
         code: 404,
@@ -74,7 +75,7 @@ export class ResponseManager {
         data: null,
         meta,
       }),
-      HttpStatus.NOT_FOUND,
+      // HttpStatus.NOT_FOUND,
     );
   }
 }

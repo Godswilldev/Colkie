@@ -48,14 +48,18 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect, OnGatewa
   }
 
   @SubscribeMessage(RoomActions.CREATE)
-  async roomCreate(client: Socket, @Session() session: any, createRoomDto: CreateRoomDto) {
+  async roomCreate(
+    @ConnectedSocket() client: Socket,
+    @Session() session: any,
+    createRoomDto: CreateRoomDto,
+  ) {
     const room = await this.roomService.create(createRoomDto, session.passport.user.id);
     client.join(room.id);
     client.emit("roomCreated", room);
   }
 
   @SubscribeMessage(RoomActions.ADD_USER)
-  async addUserToRoom(client: Socket, @Session() session: any, roomId: string) {
+  async addUserToRoom(@ConnectedSocket() client: Socket, @Session() session: any, roomId: string) {
     const { room, user } = await this.roomService.addUserToRoom(roomId, session.passport.user.id);
     client.join(room.id);
     client.emit("userAdded", room);
@@ -63,7 +67,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect, OnGatewa
   }
 
   @SubscribeMessage(RoomActions.LEAVE_ROOM)
-  async leaveRoom(client: Socket, @Session() session: any, roomId: string) {
+  async leaveRoom(@ConnectedSocket() client: Socket, @Session() session: any, roomId: string) {
     const { room, user } = await this.roomService.leaveRoom(roomId, session.passport.user.id);
     client.leave(room.id);
     client.emit("leftRoom", room);
@@ -71,14 +75,14 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect, OnGatewa
   }
 
   @SubscribeMessage(RoomActions.SEND_MESSAGE)
-  async sendMessageToRoom(client: Socket, message: CreateMessageDto) {
+  async sendMessageToRoom(@ConnectedSocket() client: Socket, message: CreateMessageDto) {
     const newMessage = await this.roomService.sendMessageToRoom(message);
     client.to(newMessage.room.id).emit("messageSent", message);
     this.wss.to(newMessage.room.id).emit("messageSent", message);
   }
 
   @SubscribeMessage(RoomActions.GET_LATEST_MESSAGE)
-  async handleGetLatestMessages(client: Socket, roomId: string) {
+  async handleGetLatestMessages(@ConnectedSocket() client: Socket, roomId: string) {
     const room = await this.roomService.getRoomMessages(roomId);
     client.emit("latestMessages", room.messages);
   }
